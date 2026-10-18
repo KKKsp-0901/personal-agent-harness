@@ -12,4 +12,6 @@ Open http://127.0.0.1:4173, configure the API key, choose an output directory, a
 
 PDFs need a selectable text layer; scanned PDFs require OCR first. Embedded images and complex charts are not recognized. Legacy .ppt and .doc files should be converted to .pptx and .docx. Run tests with node --test.
 
+The local server has no login authentication. Use it only on your own computer; do not expose it through port forwarding or a reverse proxy. It checks the local Host and cross-origin write requests, and limits expanded Office XML size.
+
 The idea was inspired by [Fei2411/DeepSeek-Bot](https://github.com/Fei2411/DeepSeek-Bot); no source code was copied. [MIT License](LICENSE).

@@ -4,7 +4,19 @@ import { unzipSync } from 'fflate';
 import { XMLParser } from 'fast-xml-parser';
 
 export const SUPPORTED_DOCUMENTS = ['.pdf', '.pptx', '.docx', '.md', '.txt'];
+const MAX_XML_ENTRY_BYTES = 5_000_000;
+const MAX_XML_TOTAL_BYTES = 40_000_000;
 const parser = new XMLParser({ ignoreAttributes: false, trimValues: false, parseTagValue: false });
+
+function unzipDocument(buffer, include) {
+  let total = 0;
+  return unzipSync(new Uint8Array(buffer), { filter: file => {
+    if (!include(file.name)) return false;
+    total += file.originalSize;
+    if (file.originalSize > MAX_XML_ENTRY_BYTES || total > MAX_XML_TOTAL_BYTES) throw new Error('Office 文档解压后过大，请拆分资料后上传');
+    return true;
+  } });
+}
 
 function values(value) { return value == null ? [] : Array.isArray(value) ? value : [value]; }
 function textNodes(node, tag) {
@@ -20,7 +32,7 @@ function zipXml(zip, name) {
 }
 
 function extractPptx(buffer) {
-  const zip = unzipSync(new Uint8Array(buffer), { filter: file => /^ppt\/slides\/slide\d+\.xml$/.test(file.name) });
+  const zip = unzipDocument(buffer, name => /^ppt\/slides\/slide\d+\.xml$/.test(name));
   const slides = Object.keys(zip).sort((a, b) => Number(a.match(/slide(\d+)/)[1]) - Number(b.match(/slide(\d+)/)[1]));
   if (!slides.length) throw new Error('PPTX 中没有可读取的幻灯片');
   return slides.map((file, index) => {
@@ -42,7 +54,7 @@ function extractPptx(buffer) {
 }
 
 function extractDocx(buffer) {
-  const zip = unzipSync(new Uint8Array(buffer), { filter: file => file.name === 'word/document.xml' });
+  const zip = unzipDocument(buffer, name => name === 'word/document.xml');
   const xml = zipXml(zip, 'word/document.xml');
   const body = xml['w:document']?.['w:body'];
   if (!body) throw new Error('Word 文档内容不可读取');

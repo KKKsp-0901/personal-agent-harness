@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS run_inputs(run_id TEXT NOT NULL, upload_id TEXT NOT N
 db.prepare("UPDATE runs SET status='interrupted', updated_at=? WHERE status='running'").run(new Date().toISOString());
 const active = new Map();
 const port = Number(process.env.PORT || 4173);
+const allowedHosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`]);
 
 function getRun(id) {
   const row = db.prepare('SELECT * FROM runs WHERE id=?').get(id);
@@ -99,6 +100,8 @@ async function launch(id) {
 
 const server = http.createServer(async (req, res) => {
   try {
+    if (!allowedHosts.has(String(req.headers.host || '').toLowerCase())) return json(res, 403, { error: '不允许该访问地址' });
+    if (!req.url?.startsWith('/') || req.url.startsWith('//')) return json(res, 400, { error: '请求路径无效' });
     const url = new URL(req.url, `http://127.0.0.1:${port}`);
     if (req.method !== 'GET') {
       const origin = req.headers.origin;

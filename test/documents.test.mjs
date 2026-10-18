@@ -31,6 +31,15 @@ test('extracts headings and paragraphs from DOCX', async () => {
   } finally { await fs.rm(dir, { recursive: true, force: true }); }
 });
 
+test('rejects Office archives with oversized expanded XML', async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'doc-agent-'));
+  try {
+    const file = path.join(dir, 'oversized.docx');
+    await fs.writeFile(file, zipSync({ 'word/document.xml': strToU8(`<w:document>${'x'.repeat(5_000_001)}</w:document>`) }));
+    await assert.rejects(extractDocument(file), /解压后过大/);
+  } finally { await fs.rm(dir, { recursive: true, force: true }); }
+});
+
 test('editor rejects duplicate chapter headings and missing citations', () => {
   assert.deepEqual(compositionIssues('# 汇总\n## 第六章 LR分析\n## 第六章：LR分析\n内容', 1).includes('存在重复章节标题'), true);
   assert.deepEqual(compositionIssues('# 汇总\n## 正文\n## 资料\n内容', 1).includes('缺少来源标注'), true);

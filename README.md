@@ -20,6 +20,8 @@
 
 DeepSeek API key 保存在当前 Windows 用户凭据管理器，也可通过 DEEPSEEK_API_KEY 环境变量提供。任务记录位于 .data/harness.sqlite，上传资料位于 .data/uploads/；这些数据不会进入 Git。服务只监听 127.0.0.1。
 
+本地服务未设置登录认证，仅供当前电脑使用；不要通过端口转发或反向代理公开。服务会校验本机 Host 与跨站写入请求，Office 文档解压后的 XML 也有体积限制。
+
 ## 支持范围
 
 | 格式 | 提取方式 | 限制 |
